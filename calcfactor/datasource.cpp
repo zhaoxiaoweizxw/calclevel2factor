@@ -35,6 +35,7 @@ namespace l2
 		}
 	}
 
+
 	// OrderInfo ----------------------------------------------
 	const string Order::ToStr() const
 	{
@@ -70,6 +71,54 @@ namespace l2
 		str += "t=" + std::to_string(type);
 		return str;
 	}
+
+	//Quota ----------------------------------------------
+	Quota::Quota()
+	{
+		this->symbol = 0;
+		this->date = 0;
+		this->time = 0;
+		this->preClose = 0;
+		this->curKOpen = 0;
+		this->curKHigh = 0;
+		this->curKLow = 0;
+		this->curKClose = 0;
+		this->curKVol = 0;
+		this->curKTurnover = 0;
+		this->curKHighLimit = 0;
+		this->curKLowLimit = 0;
+		this->curKMeanPrice = 0;
+		this->daysFromIPO = 0;
+		memset(bidPrice, 0, 10);
+		memset(bidVolumn, 0, 10);
+		memset(offerPrice, 0, 10);
+		memset(offerVolumn, 0, 10);
+	}
+
+	Quota::Quota(Symbol symbol, time_t dt, Price pClose, Price cKOpen, Price cKHigh, Price cKLow, Price cKClose, unsigned int cKVol, unsigned int cKTurnover, Price cKHighLimit,
+		Price cKLowLimit, Price cKMeanPrice, Price daysFromIPO, const  Price bidPrice[], const Price bidVolumn[], const Price offerPrice[], const Price offerVolumn[])
+	{
+		this->symbol = symbol;
+		this->time = dt;
+		this->preClose = pClose;
+		this->curKOpen = cKOpen;
+		this->curKHigh = cKHigh;
+		this->curKLow = cKLow;
+		this->curKClose = cKClose;
+		this->curKVol = cKVol;
+		this->curKTurnover = cKTurnover;
+		this->curKHighLimit = cKHighLimit;
+		this->curKLowLimit = cKLowLimit;
+		this->curKMeanPrice = cKMeanPrice;
+		this->daysFromIPO = daysFromIPO;
+		memcpy(this->bidPrice, bidPrice, 10);
+		memcpy(this->bidVolumn, bidVolumn, 10);
+		memcpy(this->offerPrice, offerPrice, 10);
+		memcpy(this->offerVolumn, offerVolumn, 10);
+
+	}
+
+	Quota::~Quota() {}
 
 	// Order --------------------------------------------------
 

@@ -13,6 +13,37 @@ namespace l2
 
 	OrderSeq ChannelSeq(int channel, OrderSeq seq);
 
+	class Quota 
+	{
+	public:
+		//构造一个空快照
+		Quota();
+		//构造一个委托
+		Quota(Symbol symbol, time_t dt, Price pClose,Price cKOpen,Price cKHigh,Price cKLow,Price cKClose,unsigned int cKVol,unsigned int cKTurnover,Price cKHighLimit,
+			Price cKLowLimit,Price cKMeanPrice,Price daysFromIPO, const Price bidPrice[], const Price bidVolumn[], const Price offerPrice[],const Price offerVolumn[]);
+
+		~Quota();
+
+		Symbol symbol;
+		int date;
+		int time;
+		Price preClose;
+		Price curKOpen;
+		Price curKHigh;
+		Price curKLow;
+		Price curKClose;
+		unsigned int curKVol;
+		unsigned int curKTurnover;
+		Price curKHighLimit;
+		Price curKLowLimit;
+		Price curKMeanPrice;
+		Price daysFromIPO;
+		Price bidPrice[10];
+		Price bidVolumn[10];
+		Price offerPrice[10];
+		Price offerVolumn[10];
+
+	};
 	class Order
 	{
 	public:
