@@ -10,8 +10,8 @@ using namespace std;
 
 void main(int argc, char **argv)
 {
-	string helpInfo = "parameter example: -dataRoot /home/gongcq/data/L2/ -targetPath ./summary/ -backDays 1 -end 20180426 -saveDays 1 -reservedSize 90 -cutOff 1500 -begin 20180301";
-	string dataRoot = "", targetPath = "./summary/";
+	string helpInfo = "parameter example: -dataRoot e:/level2/ -fastrunpath c:/fastrun954/ -targetPath ../summary/ -end 20161015 -begin 20161013 -factorlist earlymoney";
+	string dataRoot = "", targetPath = "./summary/",fastPath = "";
 	string begin = "", end = "";
 	string saveDays = "0", backDays = "1";
 	string reservedSize = "90";
@@ -21,7 +21,7 @@ void main(int argc, char **argv)
 
 	map<string, string> mp_args;
 	for (int p = 1; p < argc; p += 2) {
-		if (strcmp(argv[p], "-dataRoot") == 0) {
+		if (strcmp(argv[p], "-dataRoot") == 0) {//存放原始level2压缩文件的文件夹
 			dataRoot = argv[p + 1];
 			mp_args.insert(make_pair("dataRoot", dataRoot));
 		}
@@ -60,6 +60,10 @@ void main(int argc, char **argv)
 		else if (strcmp(argv[p], "-factorlist") == 0) {
 			factorlist = argv[p + 1];
 			mp_args.insert(make_pair("factorlist", factorlist));
+		}
+		else if (strcmp(argv[p], "-fastrunpath") == 0) {//固态硬盘的临时工作文件夹，解压缩，io更快
+			fastPath = argv[p + 1];
+			mp_args.insert(make_pair("fastrunPath", fastPath));
 		}
 	}
 

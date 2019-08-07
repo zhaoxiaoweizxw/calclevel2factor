@@ -13,35 +13,58 @@ namespace l2
 
 	OrderSeq ChannelSeq(int channel, OrderSeq seq);
 
-	class Quota 
+	class clsQuoteIndex
+	{
+	public:
+		clsQuoteIndex()
+		{
+			this->startIndex = -1;
+			this->endIndex = -1;
+		}
+		clsQuoteIndex(int nStart,int nEnd)
+		{
+			this->startIndex = nStart;
+			this->endIndex = nEnd;
+		}
+		~clsQuoteIndex() {};
+		int startIndex;
+		int endIndex;
+	};
+
+	class Quote 
 	{
 	public:
 		//构造一个空快照
-		Quota();
+		Quote();
 		//构造一个委托
-		Quota(Symbol symbol, time_t dt, Price pClose,Price cKOpen,Price cKHigh,Price cKLow,Price cKClose,unsigned int cKVol,unsigned int cKTurnover,Price cKHighLimit,
-			Price cKLowLimit,Price cKMeanPrice,Price daysFromIPO, const Price bidPrice[], const Price bidVolumn[], const Price offerPrice[],const Price offerVolumn[]);
+		Quote(Symbol symbol, time_t dt, float pClose, float cKOpen, float cKHigh, float cKLow, float cKClose,unsigned int cKVol,unsigned int cKTurnover, float cKHighLimit,
+			float cKLowLimit, float cKMeanPrice, unsigned int daysFromIPO, const float bidPrice[], const unsigned int  bidVolumn[], const float offerPrice[],const unsigned int  offerVolumn[]);
 
-		~Quota();
+		Quote &operator=(const Quote &t);
+		~Quote();
 
 		Symbol symbol;
 		int date;
 		int time;
-		Price preClose;
-		Price curKOpen;
-		Price curKHigh;
-		Price curKLow;
-		Price curKClose;
+		float preClose;
+		float curKOpen;
+		float curKHigh;
+		float curKLow;
+		float curKClose;
 		unsigned int curKVol;
 		unsigned int curKTurnover;
-		Price curKHighLimit;
-		Price curKLowLimit;
-		Price curKMeanPrice;
-		Price daysFromIPO;
-		Price bidPrice[10];
-		Price bidVolumn[10];
-		Price offerPrice[10];
-		Price offerVolumn[10];
+		float curKHighLimit;
+		float curKLowLimit;
+		float curKMeanPrice;
+		unsigned int daysFromIPO;
+		float bidPrice[10];
+		unsigned int  bidVolumn[10];
+		float offerPrice[10];
+		unsigned int  offerVolumn[10];
+
+		bool operator<(const Quote m)const { 
+			return this->time<m.time;
+		}
 
 	};
 	class Order
@@ -122,6 +145,16 @@ namespace l2
 		bool IsEmpty() const { return symbol == 0; }
 	};
 
+	class QuoteStream
+	{
+	public:
+		QuoteStream();
+		~QuoteStream();
+		void load(Symbol symbol, const string &filename, const std::vector<std::pair<int, int>> &timefilter,
+			std::vector<Quote> &quotaVec);
+		bool StrToQuote(const string &str, Quote &quota);
+	};
+
 	class OrderStream
 	{
 	public:
@@ -156,23 +189,34 @@ namespace l2
 		// std::vector<Order> _offerOrder;
 		std::vector<Order> _orderVec;
 		std::vector<Trans> _transVec;
+		std::vector<Quote> _quoteVec;
 		// 记录order的位置，用空间换时间
 		std::map<OrderSeq, int> _orderIndexMap;
+
+		// 记录quota分钟开始的位置
+		std::map<int, clsQuoteIndex*> _quoteIndexMap;
+
 		std::string _transfile;
 		std::string _orderfile;
+		std::string _quotefile;
 
 	public:
 		StockOrder(Symbol symbol = 0);
-		StockOrder(Symbol symbol, const std::string &trans, const std::string &order);
+		StockOrder(Symbol symbol, const std::string &trans, const std::string &order,const std::string &quota);
 		void AddOrder(Order &o);
 		void AddTrans(Trans &t);
+		void AddQuote(Quote &q);
 		const std::vector<Order> &GetOrder() { return _orderVec; }
 		const std::vector<Trans> &GetTrans() { return _transVec; }
+		const std::vector<Quote> &GetQuote() { return _quoteVec; }
 		Symbol GetSymbol() const { return _symbol; }
 		bool GetOrder(OrderSeq seq, Order &o);
-		bool Load(const std::string &transfile, const std::string &orderfile,
+		bool GetQuote(int time, Quote &q);
+		bool GetQuotes(int starttime, int endtime, std::vector<Quote> & qVec);
+		int calcQuoteIndex(int time);
+		bool Load(const std::string &transfile, const std::string &orderfile,const std::string &quotafile,
 			const std::vector<std::pair<int, int>> &timefilter);
-		bool Load(const std::vector<std::pair<int, int>> &timefilter) { return Load(_transfile, _orderfile, timefilter); }
+		bool Load(const std::vector<std::pair<int, int>> &timefilter) { return Load(_transfile, _orderfile,_quotefile ,timefilter); }
 		void PrepareData();
 		void OrderTrans(OrderSeq seq, unsigned int num, Price price);
 		void OrderCancel(OrderSeq seq, unsigned int num);
@@ -184,12 +228,15 @@ namespace l2
 		}
 
 		void BuildOrderIndexMap();
+		void BuildQuoteIndexMap();
 
 		void Release()
 		{
 			_orderVec.clear();
 			_transVec.clear();
+			_quoteVec.clear();
 			_orderIndexMap.clear();
+			_quoteIndexMap.clear();
 		}
 	};
 }

@@ -2,14 +2,15 @@
 @ECHO OFF
 ECHO upzip %1 ...
 set datapath=%2
+set destpath=%3
 set tdate=%datapath%%1.zip
 echo starting on %tdate%  ...
 
-set exe7z=C:\Progra~1\7-Zip\7z.exe
+set exe7z="C:\Program Files\7-Zip\7z.exe"
 if not exist %tdate% goto filenotexist
 if not exist %exe7z% goto no7z
 
-%exe7z% x %tdate% -o%datapath% -aoa
+%exe7z% x %tdate% -o%destpath% -aoa
 if %errorlevel% GTR 0 goto unziperror
 
 goto end

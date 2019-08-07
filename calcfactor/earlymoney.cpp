@@ -191,10 +191,7 @@ void EarlyMoney::OnBar(Market *mkt, int tradeDate, std::vector<StockOrder> &stkV
     //ToSQLite(mkt, tradeDate, values);
 }
 
-void EarlyMoney::SetFactorSaveName(const char* strName)
-{
-	_factorSaveName = std::string(strName);
-}
+
 bool EarlyMoney::FactorToFile(Market *mkt,int tradeDate, std::vector<Symbol>& symbollist, ActPasValues &values)
 {
 	// <symbol,<value>>

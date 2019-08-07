@@ -73,7 +73,7 @@ namespace l2
 	}
 
 	//Quota ----------------------------------------------
-	Quota::Quota()
+	Quote::Quote()
 	{
 		this->symbol = 0;
 		this->date = 0;
@@ -95,8 +95,8 @@ namespace l2
 		memset(offerVolumn, 0, 10);
 	}
 
-	Quota::Quota(Symbol symbol, time_t dt, Price pClose, Price cKOpen, Price cKHigh, Price cKLow, Price cKClose, unsigned int cKVol, unsigned int cKTurnover, Price cKHighLimit,
-		Price cKLowLimit, Price cKMeanPrice, Price daysFromIPO, const  Price bidPrice[], const Price bidVolumn[], const Price offerPrice[], const Price offerVolumn[])
+	Quote::Quote(Symbol symbol, time_t dt, float pClose, float cKOpen, float cKHigh, float cKLow, float cKClose, unsigned int cKVol, unsigned int cKTurnover, float cKHighLimit,
+		float cKLowLimit, float cKMeanPrice, unsigned int daysFromIPO, const  float bidPrice[], const unsigned int bidVolumn[], const float offerPrice[], const unsigned int offerVolumn[])
 	{
 		this->symbol = symbol;
 		this->time = dt;
@@ -117,8 +117,29 @@ namespace l2
 		memcpy(this->offerVolumn, offerVolumn, 10);
 
 	}
+	Quote &Quote::operator=(const Quote &t)
+	{
+		this->symbol = t.symbol;
+		this->time = t.time;
+		this->preClose = t.preClose;
+		this->curKOpen = t.curKOpen;
+		this->curKHigh = t.curKHigh;
+		this->curKLow = t.curKLow;
+		this->curKClose = t.curKClose;
+		this->curKVol = t.curKVol;
+		this->curKTurnover = t.curKTurnover;
+		this->curKHighLimit = t.curKHighLimit;
+		this->curKLowLimit = t.curKLowLimit;
+		this->curKMeanPrice = t.curKMeanPrice;
+		this->daysFromIPO = t.daysFromIPO;
+		memcpy(this->bidPrice, t.bidPrice, 10);
+		memcpy(this->bidVolumn, t.bidVolumn, 10);
+		memcpy(this->offerPrice, t.offerPrice, 10);
+		memcpy(this->offerVolumn, t.offerVolumn, 10);
 
-	Quota::~Quota() {}
+		return *this;
+	}
+	Quote::~Quote() {}
 
 	// Order --------------------------------------------------
 
@@ -301,6 +322,135 @@ namespace l2
 	const Trans *Trans::GetInfo() const { return this; }
 
 	bool Trans::IsValid() const { return this->seq != INVALID_TRANS_SEQ; }
+	// QuoteStream --------------------------------------------
+	QuoteStream::QuoteStream() {}
+	QuoteStream::~QuoteStream() {}
+	void QuoteStream::load(Symbol symbol, const string &filename, const std::vector<std::pair<int, int>> &timefilter,
+		std::vector<Quote> &quotaVec)
+	{
+		if (!TC_File::isFileExist(filename))
+		{
+			// LOG_DEBUG << "file is not exists: " << filename << "|" << symbol << std::endl;
+			//std::cout << "file is not exists: " << filename << "|" << symbol << std::endl;
+			return;
+		}
+		std::vector<std::string> data;
+		std::string s = TC_File::load2str(filename);
+		data = TC_Common::sepstr<std::string>(s, "\r\n");
+
+		if (data.size())
+		{
+			quotaVec.reserve(data.size());
+			string lstdata;
+			for (auto const &v : data)
+			{
+				//有一些重复的快照，时间都一样，会影响计算，过滤掉
+				if (v == lstdata)
+					continue;
+
+				Quote quote;
+				quote.symbol = symbol;
+				if (!StrToQuote(v, quote))
+				{
+					continue;
+				}
+				if (checkTime(timefilter, quote.time) )
+				{
+					quotaVec.push_back(quote);
+				}
+				lstdata = v;
+			}
+		}
+		else
+		{
+			//LOG_DEBUG << "load file failed or file is empty|" << filename << "|" << symbol << std::endl;
+			std::cout << "load file failed or file is empty|" << filename << "|" << symbol << std::endl;
+		}
+
+	}
+
+
+	bool QuoteStream::StrToQuote(const string &str, Quote &quota)
+	{
+		// LOG_DEBUG << str << std::endl;
+		char *last = nullptr;
+		char *pArr[54];
+		char *p = strtok_s((char *)(str.data()), ",", &last);
+		int c = 0;
+		while (p != NULL)
+		{
+			pArr[c] = p;
+			p = strtok_s(NULL, ",", &last);
+			c++;
+			if (c == 53)
+			{
+				break;
+			}
+		}
+		string dtStr;
+		try
+		{
+			dtStr = str.substr(0, 4) + "-" + str.substr(4, 2) + "-" + str.substr(6, 2) + " " + string(pArr[1]);
+			quota.date = TC_Common::strto<int>(str.substr(0, 8));
+			quota.time = TC_Common::strto<int>(TC_Common::replace(string(pArr[1]), ":", ""));
+		}
+		catch (std::exception &e)
+		{
+			std::cerr << "exception: " << e.what() << "|" << str << std::endl;
+			//LOG_ERROR << "exception: " << e.what() << "|" << str << std::endl;
+			return false;
+		}
+		tm dtTm; // = to_tm(time_from_string(dtStr));
+		TC_Common::str2tm(dtStr, "%Y-%m-%d %H:%M:%S", dtTm);
+		time_t dt = mktime(&dtTm);
+		int i = 1;
+		float preClose= atof(pArr[++i]) ;
+		float curOpen = atof(pArr[++i]);
+		float curHigh = atof(pArr[++i]) ;
+		float curLow = atof(pArr[++i]) ;
+		float curClose = atof(pArr[++i]) ;
+		unsigned int curVol = atoi(pArr[++i]);
+		unsigned int curAmo = atoi(pArr[++i]);
+		float curHighLimit = atof(pArr[++i]) ;
+		float curLowLimit = atof(pArr[++i]) ;
+		float curMeanPrice = atof(pArr[++i]) ;
+		unsigned int daysFromIPO = atoi(pArr[++i]);
+
+		float bidPrice[10] = { 0 };
+		unsigned int bidVol[10] = { 0 };
+		for (int k = 0; k < 10; ++k)
+		{
+			bidPrice[k] = atof(pArr[++i]) ;
+			bidVol[k] = atoi(pArr[++i]);
+		}
+
+		float offerPrice[10] = { 0 };
+		unsigned int offerVol[10] = { 0 };
+		for (int k = 0; k < 10; ++k)
+		{
+			offerPrice[k] = atof(pArr[++i]) ;
+			offerVol[k] = atoi(pArr[++i]);
+		}
+		// order.symbol = symbol;
+		quota.preClose = preClose;
+		quota.curKOpen = curOpen;
+		quota.curKHigh = curHigh;
+		quota.curKLow = curLow;
+		quota.curKClose = curClose;
+		quota.curKVol = curVol;
+		quota.curKTurnover = curAmo;
+		quota.curKHighLimit = curHighLimit;
+		quota.curKLowLimit = curLowLimit;
+		quota.curKMeanPrice = curMeanPrice;
+		quota.daysFromIPO = daysFromIPO;
+		memcpy(quota.bidPrice, bidPrice, 10);
+		memcpy(quota.bidVolumn, bidVol, 10);
+		memcpy(quota.offerPrice, offerPrice, 10);
+		memcpy(quota.offerVolumn, offerVol, 10);
+
+		return true;
+	}
+
 
 	// OrderStream --------------------------------------------
 	OrderStream::OrderStream() {}
@@ -413,7 +563,7 @@ namespace l2
 	{
 		if (!TC_File::isFileExist(filename))
 		{
-			std::cout << "file is not exists: " << filename << std::endl;
+			//std::cout << "file is not exists: " << filename << std::endl;
 			//LOG_DEBUG << "file is not exists: " << filename << std::endl;
 			return;
 		}
@@ -509,7 +659,7 @@ namespace l2
 
 	StockOrder::StockOrder(Symbol symbol) : _symbol(symbol) {}
 
-	StockOrder::StockOrder(Symbol symbol, const string &trans, const string &order) : _symbol(symbol), _transfile(trans), _orderfile(order)
+	StockOrder::StockOrder(Symbol symbol, const string &trans, const string &order, const string &quote) : _symbol(symbol), _transfile(trans), _orderfile(order),_quotefile(quote)
 	{
 
 	}
@@ -517,6 +667,8 @@ namespace l2
 	void StockOrder::AddOrder(Order &o) { _orderVec.push_back(o); }
 
 	void StockOrder::AddTrans(Trans &t) { _transVec.push_back(t); }
+
+	void StockOrder::AddQuote(Quote &q) { _quoteVec.push_back(q); }
 
 	bool StockOrder::GetOrder(OrderSeq seq, Order &o)
 	{
@@ -537,7 +689,7 @@ namespace l2
 		return false;*/
 	}
 
-	bool StockOrder::Load(const string &transfile, const string &orderfile,
+	bool StockOrder::Load(const string &transfile, const string &orderfile, const std::string &quotafile,
 		const std::vector<std::pair<int, int>> &timefilter)
 	{
 		TransStream ts;
@@ -545,6 +697,9 @@ namespace l2
 
 		OrderStream os;
 		os.load(_symbol, orderfile, timefilter, _orderVec);
+
+		QuoteStream qs;
+		qs.load(_symbol, quotafile, timefilter, _quoteVec);
 
 		return true;
 	}
@@ -557,10 +712,101 @@ namespace l2
 			_orderIndexMap.insert(make_pair(o.seq,i));
 		}
 	}
+	bool StockOrder::GetQuote(int time, Quote &q)
+	{
+		int searchIndex = calcQuoteIndex(time);
+		if (searchIndex < 0) searchIndex = _quoteVec.size() - 1;
+		Quote qt = _quoteVec[searchIndex];
+
+		return true;
+	}
+	bool StockOrder::GetQuotes(int starttime, int endtime, std::vector<Quote> & qVec)
+	{
+		qVec.clear();
+		int startIndex = calcQuoteIndex(starttime);
+		int endIndex = calcQuoteIndex(endtime);
+		if (endIndex < _quoteVec.size()) endIndex = _quoteVec.size() + 1;
+
+		std::vector<Quote>::const_iterator first1 = _quoteVec.begin() +  startIndex;
+		std::vector<Quote>::const_iterator last1 = _quoteVec.begin() + endIndex;
+		qVec.assign(first1, last1);
+		return true;
+	}
+	/**
+	分组随后查找小于等于该时间的最新快照
+	想了一下，在快照中必要性不是很大，快照数据没有那么多
+	*/
+	int StockOrder::calcQuoteIndex(int time)
+	{
+		int nret = -1;
+		/*
+		int curMin = floor(time / 100.0);
+
+		std::map<int, clsQuotaIndex*>::iterator iter;
+		iter = _quotaIndexMap.find(curMin);
+		if (iter == _quotaIndexMap.end())
+		{
+			return -1;
+		}
+
+		int startIndex = iter->second->startIndex;
+		int endIndex = iter->second->endIndex;
+
+		if (time < startIndex) return max(0, startIndex - 1);
+		if (time >= endIndex) return endIndex;
+		
+
+		int ret = lower_bound(_quotaVec.begin()+startIndex, _quotaVec.begin() + endIndex, Quota(time)) - (_quotaVec.begin() + startIndex);
+		*/
+		
+
+		Quote qt;
+		qt.time = time;
+		nret = lower_bound(_quoteVec.begin() , _quoteVec.begin(), qt) - _quoteVec.begin();
+
+		if (nret == _quoteVec.size())
+			return -1;
+
+		return nret;
+	}
+	
+	void StockOrder::BuildQuoteIndexMap()
+	{
+		int lastMin = 0;
+		int curMin = 0;
+		for (int i = 0; i < _quoteVec.size(); ++i)
+		{
+			curMin = floor(_quoteVec[i].time / 100.0);
+			if (curMin != lastMin)
+			{
+				clsQuoteIndex qi(curMin, -1);
+				_quoteIndexMap.insert(make_pair(curMin, &qi));
+
+				std::map<int, clsQuoteIndex*>::iterator iter;
+				iter = _quoteIndexMap.find(lastMin);
+				if (iter != _quoteIndexMap.end())
+				{
+					iter->second->endIndex = i ;
+				}
+			}
+			lastMin = curMin;
+		}
+		std::map<int, clsQuoteIndex*>::iterator iter;
+		iter = _quoteIndexMap.find(curMin);
+		if (iter != _quoteIndexMap.end())
+		{
+			iter->second->endIndex = _quoteVec.size();
+		}
+		return;
+	}
 
 	void StockOrder::PrepareData()
 	{
 		BuildOrderIndexMap();
+
+		//快照数量没那么多，可以不用map
+		//BuildQuotaIndexMap();
+
 		for (auto const &t : _transVec)
 		{
 			if (!t.IsValid())

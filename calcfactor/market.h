@@ -17,13 +17,18 @@ namespace l2 {
 class Market;
 typedef void (*BarMonitor)(Market &);
 
+struct tagLevel2File {
+	std::string quotafile;
+	std::string transfile;
+	std::string orderfile;
+};
 class Market
 {
     private:
     std::vector<int> _tradingDays;
     std::vector<KBarHandler*> _handler;
     // <{sz,sh}{SYMBOL}, <trans,order>>
-    std::unordered_map<string, std::pair<string, string> > _csvFiles;
+    std::unordered_map<string, tagLevel2File > _csvFiles;
     int _symbolMaxSize{0};
   protected:
     string dataPath;
@@ -43,8 +48,8 @@ class Market
 
     static bool IsStock(const string &symbol);
     // <{sz,sh}{SYMBOL}, <trans,order>>
-    void GetStockFile(int tradeDate, std::unordered_map<string, std::pair<string, string> > &fileNameSet);
-    static void GetStockFile(const string& pathStr, std::unordered_map<string, std::pair<string, string> > &fileNameSet);
+    void GetStockFile(int tradeDate, std::unordered_map<string, tagLevel2File > &fileNameSet);
+    static void GetStockFile(const string& pathStr, std::unordered_map<string, tagLevel2File> &fileNameSet);
     static const string GetSymbolStr(const Symbol symbol);
     size_t GetSymbolMaxSize();
 

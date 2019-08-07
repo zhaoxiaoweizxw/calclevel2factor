@@ -5,6 +5,7 @@
 #include "BigSmall.h"
 #include "DailyFactors.h"
 #include "earlymoney.h"
+#include "aggauctionAM.h"
 //#include "business/refdata/MarketSessionManager.h"
 #include "market.h"
 #include "public.h"
@@ -46,6 +47,7 @@ int factorLevel2(map<string, string> mapValue)
 {
     std::string dataRoot = getMapvalue("dataRoot", mapValue,"/data/algo/level2data");
     std::string targetPath = getMapvalue("targetPath", mapValue,"/data/algo/factor");
+	std::string FastworkPath = getMapvalue("fastrunPath", mapValue, dataRoot);
     std::vector<std::string> factorList = TC_Common::sepstr<std::string>(getMapvalue("factorlist", mapValue,""), ",|");
     if (factorList.empty())
     {
@@ -64,6 +66,18 @@ int factorLevel2(map<string, string> mapValue)
 			return nRet;
 		}
 	}
+
+	FastworkPath = FastworkPath[FastworkPath.size() - 1] == '/' ? std::string(FastworkPath.data(), FastworkPath.size() - 1) : FastworkPath;
+	if (!TC_File::isFileExist(FastworkPath))
+	{
+		nRet = _mkdir(FastworkPath.c_str());
+		if (nRet != 0)
+		{
+			std::cerr << "Create fastwordPath: " << FastworkPath << " failed" << std::endl;
+			return nRet;
+		}
+	}
+	FastworkPath += "\\";
 
 	//创建存储因子的文件夹
 	for (string factorSaveName : factorList)
@@ -126,9 +140,9 @@ int factorLevel2(map<string, string> mapValue)
     //LOG_DEBUG << TC_Common::tostr(tradingDays.begin(), tradingDays.end()) << std::endl;
 	std::cout << TC_Common::tostr(tradingDays.begin(), tradingDays.end()) << std::endl;
 
-    vector<string> sourceSet{"szlv2order", "szlv2trans", "shlv2trans"};
-    // 时间范围: 左闭右开区间
-    std::vector<std::pair<int, int>> timefilter{{91500, 92501}, {93000, 113001}, {130000, 150001}};
+	vector<string> sourceSet{ "szlv2order", "szlv2trans", "shlv2trans","quote" };
+	// 时间范围: 左闭右开区间，开盘集合竞价把时间放到92601是因为股票的开盘价在92530以后才出来，这种现象不少
+	std::vector<std::pair<int, int>> timefilter{ { 91500, 92601 },{ 93000, 113001 },{ 130000, 150001 } };
 
     // 按天处理,避免修复数据是存储空间不足的问题
     for (auto const &d : tradingDays)
@@ -138,7 +152,9 @@ int factorLevel2(map<string, string> mapValue)
         //std::string cmd = std::string("bash level2downloader.sh -d ") + std::to_string(d);
 		std::string tmpdataRoot(dataRoot);
 		replace(tmpdataRoot.begin(), tmpdataRoot.end(), '/', '\\');
-		std::string cmd = std::string("..\\scripts\\level2downloader.bat ") + std::to_string(d) + " " + tmpdataRoot;
+		std::string tmpfastRoot(FastworkPath);
+		replace(tmpfastRoot.begin(), tmpfastRoot.end(), '/', '\\');
+		std::string cmd = std::string("..\\scripts\\level2downloader.bat ") + std::to_string(d) + " " + tmpdataRoot + " "+ tmpfastRoot;
         int rc = ::system(cmd.c_str());
         if (rc != 0)
         {
@@ -162,26 +178,32 @@ int factorLevel2(map<string, string> mapValue)
             //l2::DailyFactors daily;
             l2::BigSmall bigsmall;
 			l2::EarlyMoney earlymoney;
+			l2::aggauctionAM aggaucInam;
             std::vector<int> days;
             days.push_back(d);
-            l2::Market market(dataRoot, targetPath, days, sourceSet, timefilter);
+            l2::Market market(FastworkPath, targetPath, days, sourceSet, timefilter);
             // 注册数据处理器
             if (std::find(factorList.begin(), factorList.end(), "earlymoney") != factorList.end())
             {
-                market.RegHandler(&earlymoney);
 				earlymoney.SetFactorSaveName("earlymoney");
+                market.RegHandler(&earlymoney);
             }
             if (std::find(factorList.begin(), factorList.end(), "bigsmall") != factorList.end())
             {
-                market.RegHandler(&bigsmall);
 				bigsmall.SetFactorSaveName("bigsmall");
+                market.RegHandler(&bigsmall);
             }
-            market.Run(3);
+			if (std::find(factorList.begin(), factorList.end(), "aggAucAm") != factorList.end())
+			{
+				aggaucInam.SetFactorSaveName("aggAucAm");
+				market.RegHandler(&aggaucInam);
+			}
+            market.Run(14);
 			finish = clock();
             //LOG_DEBUG << "tradedate=" << d << "|process finished elapse " << (t.elapse() / 1000) << " s" << std::endl;
 			std::cout << "tradedate=" << d << "|process finished elapse " << ((finish-start) / CLOCKS_PER_SEC) << " s" << std::endl;
-			replace(dataRoot.begin(), dataRoot.end(), '/', '\\');
-			std::string rmfile = "rd /S/Q " + dataRoot + std::to_string(d);
+			replace(FastworkPath.begin(), FastworkPath.end(), '/', '\\');
+			std::string rmfile = "rd /S/Q " + FastworkPath + std::to_string(d);
             ::system(rmfile.c_str());
         }
         catch (std::exception &e)

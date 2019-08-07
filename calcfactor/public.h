@@ -37,7 +37,10 @@ class Market;
 class KBarHandler
 {
 public:
+	// @param factorName	因子的系列名称，以此建立文件夹
+	std::string _factorSaveName;
 public:
+	void SetFactorSaveName(const char* strName);
     virtual void OnBar(Market* mkt, int tradeDate,std::vector< StockOrder>& stk) = 0;
     virtual ~KBarHandler();
 };

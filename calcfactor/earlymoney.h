@@ -30,14 +30,10 @@ class EarlyMoney: public KBarHandler
   private:
 
 	  //std::vector<Symbol> _symbollist;
-	  // @param factorName	因子的系列名称，以此建立文件夹
-	  std::string _factorSaveName;
-
 
 public:
 	EarlyMoney();
 
-	void SetFactorSaveName(const char* strName);
     //
     void OnBar(Market* mkt, int tradeDate, std::vector<StockOrder> &stkVec) override;
 

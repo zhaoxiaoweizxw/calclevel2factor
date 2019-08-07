@@ -112,6 +112,7 @@
   <ItemGroup>
     <ClCompile Include="..\utils\TimeUtil.cpp" />
     <ClCompile Include="..\utils\utils_common.cpp" />
+    <ClCompile Include="aggauctionAM.cpp" />
     <ClCompile Include="BigSmall.cpp" />
     <ClCompile Include="DailyFactors.cpp" />
     <ClCompile Include="datasource.cpp" />
@@ -124,6 +125,7 @@
   <ItemGroup>
     <ClInclude Include="..\utils\TimeUtil.h" />
     <ClInclude Include="..\utils\utils_common.h" />
+    <ClInclude Include="aggauctionAM.h" />
     <ClInclude Include="BigSmall.h" />
     <ClInclude Include="DailyFactors.h" />
     <ClInclude Include="datasource.h" />

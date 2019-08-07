@@ -38,4 +38,10 @@ const unsigned int HOUR_SECONDS = 3600;
 const unsigned int MINUTE_SECONDS = 60;
 
 KBarHandler::~KBarHandler() {}
+
+
+void KBarHandler::SetFactorSaveName(const char* strName)
+{
+	_factorSaveName = std::string(strName);
+}
 }

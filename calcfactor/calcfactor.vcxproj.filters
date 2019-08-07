@@ -45,6 +45,9 @@
     <ClCompile Include="earlymoney.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="aggauctionAM.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="public.h">
@@ -72,6 +75,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="earlymoney.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="aggauctionAM.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

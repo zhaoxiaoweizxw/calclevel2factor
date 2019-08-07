@@ -73,9 +73,10 @@ void Market::Run(int threadCnt)
 				continue;*/
 
             Symbol symbol = std::stoi(v.first.substr(2, 6));
-            const std::string &trans = v.second.first;
-            const std::string &order = v.second.second;
-            stkGroup[cnt % threadCnt].emplace_back(StockOrder(symbol, trans, order));
+            const std::string &trans = v.second.transfile;
+            const std::string &order = v.second.orderfile;
+			const std::string &quota = v.second.quotafile;
+            stkGroup[cnt % threadCnt].emplace_back(StockOrder(symbol, trans, order, quota));
 			
             cnt++;
 			/*if (cnt >= 2000)
@@ -167,7 +168,7 @@ bool Market::IsStock(const string &symbol)
     return false;
 }
 
-void Market::GetStockFile(int tradeDate, std::unordered_map<string, std::pair<string, string>> &fileNameSet)
+void Market::GetStockFile(int tradeDate, std::unordered_map<string, tagLevel2File> &fileNameSet)
 {
 
     for (auto &s : sourceSet)
@@ -176,7 +177,7 @@ void Market::GetStockFile(int tradeDate, std::unordered_map<string, std::pair<st
     }
 }
 void Market::GetStockFile(const std::string &pathStr,
-                          std::unordered_map<std::string, std::pair<std::string, std::string>> &fileNameSet)
+                          std::unordered_map<std::string, tagLevel2File> &fileNameSet)
 {
     // <sz{SYMBOL}, <trans,order>>
     // std::unordered_map<std::string, std::pair<std::string, std::string>> symfile;
@@ -211,13 +212,18 @@ void Market::GetStockFile(const std::string &pathStr,
             if (fileName.find("order") != std::string::npos)
             {
                 // LOG_DEBUG << "order " << fileName << std::endl;
-                fileNameSet[fileName.substr(fileName.size() - 12, 8)].second = fileName;
+                fileNameSet[fileName.substr(fileName.size() - 12, 8)].orderfile = fileName;
             }
             else if (fileName.find("trans") != std::string::npos)
             {
                 // LOG_DEBUG << "trans " << fileName << std::endl;
-                fileNameSet[fileName.substr(fileName.size() - 12, 8)].first = fileName;
+                fileNameSet[fileName.substr(fileName.size() - 12, 8)].transfile = fileName;
             }
+			else if (fileName.find("quote") != std::string::npos)
+			{
+				// LOG_DEBUG << "trans " << fileName << std::endl;
+				fileNameSet[fileName.substr(fileName.size() - 12, 8)].quotafile = fileName;
+			}
         }
     }
 }
