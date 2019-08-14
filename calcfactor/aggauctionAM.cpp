@@ -19,7 +19,26 @@ namespace l2
 	static const char *FACTOR_NAME[] = { "crsDayPct",   "stage1Pct",    "stage2Pct",  "aggAucAmAmout" ,"stage1High","stage1Low","stepUpDownVec","Step2Num","highlimit","lowlimit"};
 	static const unsigned int FACTOR_SIZE = sizeof(FACTOR_NAME) / sizeof(FACTOR_NAME[0]);
 
-	double calcCorr(vector<double> &A, vector<double> &B, long Length) {
+	template < typename T>
+	vector< size_t> sort_indexes(const vector< T>  & v) {
+
+		// initialize original index locations
+		vector< size_t>  idx(v.size());
+		for (size_t i = 0; i != idx.size(); ++i) idx[i] = i;
+
+		// sort indexes based on comparing values in v
+		sort(idx.begin(), idx.end(),
+			[&v](size_t i1, size_t i2) {return v[i1] <  v[i2]; });
+
+		vector< size_t>  rnk(v.size());
+		for (size_t i = 0; i != idx.size(); ++i)
+		{
+			rnk[idx[i]] = i;
+		}
+		return rnk;
+	}
+
+	double calcCorr(vector<size_t> &A, vector<size_t> &B, long Length) {
 		double sumA(0.0), sumB(0.0), aveA(0.0), aveB(0.0);
 
 		//求和
@@ -101,8 +120,10 @@ namespace l2
 		vector<double> stage2CloseVec;
 		time_t stage1endtime = 92001;
 		time_t stage2endtime = 92501;
+		time_t stage2finaltime = 92601;
 		double highLimit = 0.0;
 		double lowLimit = 0.0;
+		double lastclose = 0.0;
 
 		for (auto &stk : stkVec)
 		{
@@ -154,11 +175,12 @@ namespace l2
 				}
 				if (curTime > stage1endtime && curTime <= stage2endtime && quote.curKClose>NaNValue)
 				{
-					stage2CloseVec.push_back(quote.curKClose);
+					if(abs(lastclose - quote.curKClose)>NaNValue)
+						stage2CloseVec.push_back(quote.curKClose);
 				}
 
 				//保留未形成开盘价的信息
-				if (quote.curKOpen > NaNValue)
+				if (quote.curKOpen > NaNValue || quote.time >stage2finaltime)
 				{
 					curOpen = quote.curKOpen;
 					preClose = quote.preClose;
@@ -168,6 +190,7 @@ namespace l2
 					break;
 				}
 				lstTime = curTime;
+				lastclose = quote.curKClose;
 			}
 			values.crsDayPctVec[curSymbol][0] = curOpen<NaNValue? MaxValue : (curOpen / preClose-1)*100;
 			values.stage1PctVec[curSymbol][0] = stage1Close<NaNValue ? MaxValue : (stage1Close / preClose - 1) * 100;
@@ -199,12 +222,13 @@ namespace l2
 			}
 			else
 			{
-				std::vector<double> ranktime;
+				std::vector<size_t> ranktime;
+				std::vector<size_t> rankprice;
 				for (int i = 0; i < nStage2PriceLen; ++i)
-				{
 					ranktime.push_back(i);
-				}
-				dUpDncorr = calcCorr(ranktime, stage2CloseVec, nStage2PriceLen);
+
+				rankprice = sort_indexes(stage2CloseVec);
+				dUpDncorr = calcCorr(ranktime, rankprice, nStage2PriceLen);
 			}
 			values.stepUpDownVec[curSymbol][0] = dUpDncorr;
 			values.step2DnumVec[curSymbol][0] = nStage2PriceLen;

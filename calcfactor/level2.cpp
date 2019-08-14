@@ -6,6 +6,7 @@
 #include "DailyFactors.h"
 #include "earlymoney.h"
 #include "aggauctionAM.h"
+#include "softbigsmall.h"
 //#include "business/refdata/MarketSessionManager.h"
 #include "market.h"
 #include "public.h"
@@ -45,6 +46,8 @@ string getMapvalue(string sKey,map<string,string> mapValue,string sDefaultV)
 
 int factorLevel2(map<string, string> mapValue)
 {
+	std::string threadnumb = getMapvalue("threadnum", mapValue, "3");
+
     std::string dataRoot = getMapvalue("dataRoot", mapValue,"/data/algo/level2data");
     std::string targetPath = getMapvalue("targetPath", mapValue,"/data/algo/factor");
 	std::string FastworkPath = getMapvalue("fastrunPath", mapValue, dataRoot);
@@ -179,6 +182,7 @@ int factorLevel2(map<string, string> mapValue)
             l2::BigSmall bigsmall;
 			l2::EarlyMoney earlymoney;
 			l2::aggauctionAM aggaucInam;
+			l2::SoftbigAmall softbigsmall(100);
             std::vector<int> days;
             days.push_back(d);
             l2::Market market(FastworkPath, targetPath, days, sourceSet, timefilter);
@@ -198,7 +202,12 @@ int factorLevel2(map<string, string> mapValue)
 				aggaucInam.SetFactorSaveName("aggAucAm");
 				market.RegHandler(&aggaucInam);
 			}
-            market.Run(14);
+			if (std::find(factorList.begin(), factorList.end(), "softbigsmall") != factorList.end())
+			{
+				softbigsmall.SetFactorSaveName("softbigsmall");
+				market.RegHandler(&softbigsmall);
+			}
+            market.Run(atoi(threadnumb.data()));
 			finish = clock();
             //LOG_DEBUG << "tradedate=" << d << "|process finished elapse " << (t.elapse() / 1000) << " s" << std::endl;
 			std::cout << "tradedate=" << d << "|process finished elapse " << ((finish-start) / CLOCKS_PER_SEC) << " s" << std::endl;

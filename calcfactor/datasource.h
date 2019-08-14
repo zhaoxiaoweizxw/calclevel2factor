@@ -211,8 +211,8 @@ namespace l2
 		const std::vector<Quote> &GetQuote() { return _quoteVec; }
 		Symbol GetSymbol() const { return _symbol; }
 		bool GetOrder(OrderSeq seq, Order &o);
-		bool GetQuote(int time, Quote &q);
-		bool GetQuotes(int starttime, int endtime, std::vector<Quote> & qVec);
+		bool GetPreTimeQuote(int time, Quote &q);
+		bool GetTimeRangeQuotes(int starttime, int endtime, std::vector<Quote> & qVec);
 		int calcQuoteIndex(int time);
 		bool Load(const std::string &transfile, const std::string &orderfile,const std::string &quotafile,
 			const std::vector<std::pair<int, int>> &timefilter);
@@ -233,8 +233,11 @@ namespace l2
 		void Release()
 		{
 			_orderVec.clear();
+			std::vector<Order>().swap(_orderVec);
 			_transVec.clear();
+			std::vector<Trans>().swap(_transVec);
 			_quoteVec.clear();
+			std::vector<Quote>().swap(_quoteVec);
 			_orderIndexMap.clear();
 			_quoteIndexMap.clear();
 		}

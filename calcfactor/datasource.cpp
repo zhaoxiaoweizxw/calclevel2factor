@@ -712,7 +712,7 @@ namespace l2
 			_orderIndexMap.insert(make_pair(o.seq,i));
 		}
 	}
-	bool StockOrder::GetQuote(int time, Quote &q)
+	bool StockOrder::GetPreTimeQuote(int time, Quote &q)
 	{
 		int searchIndex = calcQuoteIndex(time);
 		if (searchIndex < 0) searchIndex = _quoteVec.size() - 1;
@@ -720,7 +720,7 @@ namespace l2
 
 		return true;
 	}
-	bool StockOrder::GetQuotes(int starttime, int endtime, std::vector<Quote> & qVec)
+	bool StockOrder::GetTimeRangeQuotes(int starttime, int endtime, std::vector<Quote> & qVec)
 	{
 		qVec.clear();
 		int startIndex = calcQuoteIndex(starttime);

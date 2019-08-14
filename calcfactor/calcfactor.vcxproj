@@ -121,6 +121,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="market.cpp" />
     <ClCompile Include="public.cpp" />
+    <ClCompile Include="softbigsmall.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\utils\TimeUtil.h" />
@@ -133,6 +134,7 @@
     <ClInclude Include="level2.h" />
     <ClInclude Include="market.h" />
     <ClInclude Include="public.h" />
+    <ClInclude Include="softbigsmall.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

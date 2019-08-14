@@ -18,8 +18,10 @@ void main(int argc, char **argv)
 	string cutOff = "1500";
 	string freq = "day";
 	string factorlist = "";
+	string threadnumb = "3";
 
 	map<string, string> mp_args;
+	mp_args.insert(make_pair("threadnum", threadnumb));
 	for (int p = 1; p < argc; p += 2) {
 		if (strcmp(argv[p], "-dataRoot") == 0) {//存放原始level2压缩文件的文件夹
 			dataRoot = argv[p + 1];
@@ -64,6 +66,10 @@ void main(int argc, char **argv)
 		else if (strcmp(argv[p], "-fastrunpath") == 0) {//固态硬盘的临时工作文件夹，解压缩，io更快
 			fastPath = argv[p + 1];
 			mp_args.insert(make_pair("fastrunPath", fastPath));
+		}
+		else if (strcmp(argv[p], "-threadnum") == 0) {//配置线程数
+			threadnumb = argv[p + 1];
+			mp_args["threadnum"] = threadnumb;
 		}
 	}
 

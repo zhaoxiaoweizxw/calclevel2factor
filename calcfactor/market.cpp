@@ -73,6 +73,9 @@ void Market::Run(int threadCnt)
 				continue;*/
 
             Symbol symbol = std::stoi(v.first.substr(2, 6));
+			//不处理指数
+			if (v.first[1] == 'h' && symbol < 600000)
+				continue;
             const std::string &trans = v.second.transfile;
             const std::string &order = v.second.orderfile;
 			const std::string &quota = v.second.quotafile;
@@ -161,7 +164,7 @@ bool Market::IsStock(const string &symbol)
     if (symbol.substr(0, 3) == string("000") || symbol.substr(0, 3) == string("001") ||
         symbol.substr(0, 3) == string("002") || symbol.substr(0, 3) == string("300") ||
         symbol.substr(0, 3) == string("600") || symbol.substr(0, 3) == string("601") ||
-        symbol.substr(0, 3) == string("603"))
+        symbol.substr(0, 3) == string("603") || symbol.substr(0, 3) == string("688"))
     {
         return true;
     }
