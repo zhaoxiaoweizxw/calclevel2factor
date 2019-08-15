@@ -1,3 +1,4 @@
+
 #include "softbigsmall.h"
 #include "../utils/utils_common.h"
 #include <cmath>
@@ -38,8 +39,7 @@ namespace l2
 		}
 		return DIV_SIZE - 1;
 	}
-
-	PerBuckValues::PerBuckValues(const std::vector<StockOrder> &stkVec,int DIV_SIZE)
+	void PerBuckValues::initBuck(const std::vector<StockOrder> &stkVec,int DIV_SIZE)
 	{
 		for (auto const &stk : stkVec)
 		{
@@ -67,7 +67,22 @@ namespace l2
 		{
 			std::vector< double>().swap(iter->second);
 		}
+		for (auto iter = ActiveSelAmtVec.begin(); iter != ActiveSelAmtVec.end(); ++iter)
+		{
+			std::vector< double>().swap(iter->second);
+		}
+		for (auto iter = PassivBuyAmtVec.begin(); iter != PassivBuyAmtVec.end(); ++iter)
+		{
+			std::vector< double>().swap(iter->second);
+		}
+		for (auto iter = PassivSelAmtVec.begin(); iter != PassivSelAmtVec.end(); ++iter)
+		{
+			std::vector< double>().swap(iter->second);
+		}
 		ActiveBuyAmtVec.clear();
+		ActiveSelAmtVec.clear();
+		PassivBuyAmtVec.clear();
+		PassivSelAmtVec.clear();
 	}
 
 	SoftbigAmall::SoftbigAmall(int UpLimit,int nSpan )
@@ -101,13 +116,10 @@ namespace l2
 	{
 		vector<double>().swap(this->Buck_DIV_ARR);
 		vector<string>().swap(this->Buck_DIV_NAME);
-		if (pvalue)
-			delete pvalue;
+		vector<string>().swap(this->Buck_DIV_KIND);
+
 	}
-	void SoftbigAmall::intiStatDataSet(const std::vector<StockOrder> &stkVec, int div_size)
-	{
-		pvalue = new PerBuckValues(stkVec, div_size);
-	}
+
 
 	void SoftbigAmall::OnBar(Market *mkt, int tradeDate, std::vector<StockOrder> &stkVec)
 	{
@@ -115,9 +127,9 @@ namespace l2
 		std::vector<Symbol> symbollist;
 		symbollist.reserve(stkVec.size());
 
-		this->intiStatDataSet(stkVec, this->DIV_SIZE);
+		PerBuckValues values;
+		values.initBuck(stkVec, this->DIV_SIZE);
 
-		PerBuckValues& values = *pvalue;
 
 		for (auto &stk : stkVec)
 		{
@@ -127,19 +139,17 @@ namespace l2
 			const vector<Quote> &quoteList = stk.GetQuote(); // market->GetTransList(symbol);
 
 			OrderSeq lstBidSeq = 0, lstOfferSeq = 0;
-			double lstbidAmt = 0.0, lstofferAmt = 0.0;
-			double lstbidVol = 0.0, lstofferVol = 0.0;
+			long long lstbidAmt = 0, lstofferAmt = 0;
+			long lstbidVol = 0, lstofferVol = 0;
 			ActiveType lstActType = ActiveType::ActiveUnk;
 			ActiveType crtActType = ActiveType::ActiveUnk;
 
 
-			int bidDivSeq = -1;
-			int offerDivSeq = -1;
 
-			double price = 0.0;
-			double lstprice = 0.0;
-			double volumn = 0.0;
-			double amount = 0.0;
+			Price price = 0;
+			Price lstprice = 0.0;
+			long volumn = 0;
+			long long amount = 0;
 
 			for (auto const &trans : transList)
 			{
@@ -159,12 +169,9 @@ namespace l2
 				OrderSeq bidSeq = transInfo->bidSeq;
 				OrderSeq offerSeq = transInfo->offerSeq;
 
-				price = double(transInfo->price) / 100;
+				price = transInfo->price;
 				volumn = transInfo->num;
-				amount = price * volumn;
-
-				bidDivSeq = -1;
-				offerDivSeq = -1;
+				amount = price * volumn ;
 
 
 				if (transInfo->type == 'F' || transInfo->type == 'N')
@@ -176,8 +183,8 @@ namespace l2
 					//4：尾盘集合竞价，成交大大于最后一个价格
 
 
-					if ((q.offerPrice[0] > superMinPoint && price >= q.offerPrice[0]) ||
-						((q.offerPrice[0] < superMinPoint) && (price >= lstprice) && ((price >q.preClose * 1.102 && price < q.preClose * 1.098) || (price >q.preClose * 1.052 && price < q.preClose * 1.048))) ||
+					if ((q.offerPrice[0] > superMinPoint && price >= q.offerPrice[0] && q.bidPrice[0] > superMinPoint && q.time >= 92500) ||
+						((q.offerPrice[0] < superMinPoint) && (price >= lstprice) && ((price < q.preClose * 1.105 && price > q.preClose * 1.095) || (price < q.preClose * 1.055 && price > q.preClose * 1.045))) ||
 						((q.preClose < price) && (ntradetime <= 92500))
 						)
 					{
@@ -190,8 +197,8 @@ namespace l2
 					//3：早盘集合竞价，成交价大于昨收
 					//4：尾盘集合竞价，成交大大于最后一个价格
 					
-					if ((q.bidPrice[0] > superMinPoint && price <= q.bidPrice[0]) ||
-						((q.offerPrice[0] < superMinPoint) && (price >= lstprice) && ((price >q.preClose * (1-0.102) && price < q.preClose * (1-0.098)) || (price >q.preClose * (1 - 0.102) && price < q.preClose * (1 - 0.048)))) ||
+					if ((q.bidPrice[0] > superMinPoint && price <= q.bidPrice[0] && q.offerPrice[0] > superMinPoint && q.time >= 92500) ||
+						((q.bidPrice[0] < superMinPoint) && (price <= lstprice) && ((price >q.preClose * (1-0.105) && price < q.preClose * (1-0.095)) || (price >q.preClose * (1 - 0.055) && price < q.preClose * (1 - 0.045)))) ||
 						(price > superMinPoint && (q.preClose > price) && (ntradetime <= 92500))
 						)
 					{
@@ -200,9 +207,9 @@ namespace l2
 
 					if ((ntradetime >= 150000) && (netsymbol < 600000 || (netsymbol >= 600000 && nDate >= 20180820)))
 					{
-						if (price >lstprice)
+						if (price >lstprice || ((price < q.preClose * 1.105 && price > q.preClose * 1.095) || (price < q.preClose * 1.055 && price > q.preClose * 1.045)))
 							crtActType = ActiveType::ActiveBuy;
-						else if (price <lstprice)
+						else if (price <lstprice || ((price >q.preClose * (1 - 0.102) && price < q.preClose * (1 - 0.095)) || (price >q.preClose * (1 - 0.052) && price < q.preClose * (1 - 0.045))))
 							crtActType = ActiveType::ActiveSel;
 					}
 
@@ -228,28 +235,13 @@ namespace l2
 						else
 						{
 							//开始了一笔新主动买，上一笔主动单结束
-							if (lstbidAmt > 0)
-							{
-								bidDivSeq = GetAmountInterval(lstbidAmt);
-								if (bidDivSeq < DIV_SIZE)
-								{
-									values.ActiveBuyAmtVec[netsymbol].at(bidDivSeq) += lstbidAmt;
-								}
-							}
-							else if (lstofferAmt > 0)
-							{
-								offerDivSeq = GetAmountInterval(lstofferAmt);
-								if (offerDivSeq < DIV_SIZE)
-								{
-									values.ActiveSelAmtVec[netsymbol].at(offerDivSeq) += lstofferAmt;
-								}
-							}
+							insertToBuck(netsymbol, lstbidAmt, lstofferAmt, values);
 							lstbidAmt = amount;
 							lstbidVol = volumn;
 						}
 						crtActType = ActiveType::ActiveBuy;
-						lstofferAmt = 0.0;
-						lstofferVol = 0.0;
+						lstofferAmt = 0;
+						lstofferVol = 0;
 					}
 					else
 					{
@@ -262,28 +254,13 @@ namespace l2
 						else
 						{
 							//开始了一笔新主动买，上一笔主动单结束
-							if (lstbidAmt > 0)
-							{
-								bidDivSeq = GetAmountInterval(lstbidAmt);
-								if (bidDivSeq < DIV_SIZE)
-								{
-									values.ActiveBuyAmtVec[netsymbol].at(bidDivSeq) += lstbidAmt;
-								}
-							}
-							else if (lstofferAmt > 0)
-							{
-								offerDivSeq = GetAmountInterval(lstofferAmt);
-								if (offerDivSeq < DIV_SIZE)
-								{
-									values.ActiveSelAmtVec[netsymbol].at(offerDivSeq) += lstofferAmt;
-								}
-							}
+							insertToBuck(netsymbol, lstbidAmt, lstofferAmt, values);
 							lstofferAmt = amount;
 							lstofferVol = volumn;
 						}
 						crtActType = ActiveType::ActiveSel;
-						lstbidAmt = 0.0;
-						lstbidVol = 0.0;
+						lstbidAmt = 0;
+						lstbidVol = 0;
 					}
 					lstBidSeq = bidSeq;
 					lstOfferSeq = offerSeq;
@@ -291,12 +268,37 @@ namespace l2
 						lstprice = price;
 				}
 			}
+			
+			insertToBuck(netsymbol, lstbidAmt, lstofferAmt, values);
 		}
 
 		FactorToFile(mkt, tradeDate, symbollist, values);
 		//ToSQLite(mkt, tradeDate, values);
 	}
 
+	void SoftbigAmall::insertToBuck(Symbol netsymbol, long lstbidAmt, long lstofferAmt,PerBuckValues& values)
+	{
+
+		int bidDivSeq = -1;
+		int offerDivSeq = -1;
+
+		if (lstbidAmt > superMinPoint)
+		{
+			bidDivSeq = GetAmountInterval(lstbidAmt / 100.0);
+			if (bidDivSeq < DIV_SIZE)
+			{
+				values.ActiveBuyAmtVec[netsymbol].at(bidDivSeq) += lstbidAmt/100.0;
+			}
+		}
+		else if (lstofferAmt > superMinPoint)
+		{
+			offerDivSeq = GetAmountInterval(lstofferAmt / 100.0);
+			if (offerDivSeq < DIV_SIZE)
+			{
+				values.ActiveSelAmtVec[netsymbol].at(offerDivSeq) += lstofferAmt /100.0;
+			}
+		}
+	}
 
 	bool SoftbigAmall::FactorToFile(Market *mkt, int tradeDate, std::vector<Symbol>& symbollist, PerBuckValues &values)
 	{
@@ -320,6 +322,7 @@ namespace l2
 		{
 			std::vector<double>().swap(iter->second);
 		}
+		results.clear();
 
 		return true;
 

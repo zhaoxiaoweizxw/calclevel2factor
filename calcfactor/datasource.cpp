@@ -1,3 +1,4 @@
+
 #include "datasource.h"
 //#include "common/AlgoLog.h"
 //#include "public.h"
@@ -10,6 +11,10 @@ using namespace std;
 
 namespace l2
 {
+	static int getRound100(double price)
+	{
+		return int(round(price * 100));
+	}
 
 	static bool checkTime(const std::vector<std::pair<int, int>> &timefilter, int t)
 	{
@@ -416,32 +421,32 @@ namespace l2
 		float curMeanPrice = atof(pArr[++i]) ;
 		unsigned int daysFromIPO = atoi(pArr[++i]);
 
-		float bidPrice[10] = { 0 };
+		Price bidPrice[10] = { 0 };
 		unsigned int bidVol[10] = { 0 };
 		for (int k = 0; k < 10; ++k)
 		{
-			bidPrice[k] = atof(pArr[++i]) ;
+			bidPrice[k] = getRound100(atof(pArr[++i]) );
 			bidVol[k] = atoi(pArr[++i]);
 		}
 
-		float offerPrice[10] = { 0 };
+		Price offerPrice[10] = { 0 };
 		unsigned int offerVol[10] = { 0 };
 		for (int k = 0; k < 10; ++k)
 		{
-			offerPrice[k] = atof(pArr[++i]) ;
+			offerPrice[k] = getRound100(atof(pArr[++i]) );
 			offerVol[k] = atoi(pArr[++i]);
 		}
 		// order.symbol = symbol;
-		quota.preClose = preClose;
-		quota.curKOpen = curOpen;
-		quota.curKHigh = curHigh;
-		quota.curKLow = curLow;
-		quota.curKClose = curClose;
+		quota.preClose = getRound100(preClose);
+		quota.curKOpen = getRound100(curOpen);
+		quota.curKHigh = getRound100(curHigh);
+		quota.curKLow = getRound100(curLow);
+		quota.curKClose = getRound100(curClose);
 		quota.curKVol = curVol;
 		quota.curKTurnover = curAmo;
-		quota.curKHighLimit = curHighLimit;
-		quota.curKLowLimit = curLowLimit;
-		quota.curKMeanPrice = curMeanPrice;
+		quota.curKHighLimit = getRound100(curHighLimit);
+		quota.curKLowLimit = getRound100(curLowLimit);
+		quota.curKMeanPrice = getRound100(curMeanPrice);
 		quota.daysFromIPO = daysFromIPO;
 		memcpy(quota.bidPrice, bidPrice, 10);
 		memcpy(quota.bidVolumn, bidVol, 10);
@@ -715,8 +720,8 @@ namespace l2
 	bool StockOrder::GetPreTimeQuote(int time, Quote &q)
 	{
 		int searchIndex = calcQuoteIndex(time);
-		if (searchIndex < 0) searchIndex = _quoteVec.size() - 1;
-		Quote qt = _quoteVec[searchIndex];
+		if (searchIndex < 0) searchIndex = 0;
+		q = _quoteVec[searchIndex];
 
 		return true;
 	}
@@ -736,6 +741,10 @@ namespace l2
 	分组随后查找小于等于该时间的最新快照
 	想了一下，在快照中必要性不是很大，快照数据没有那么多
 	*/
+	bool quotetimecmp(const Quote m1, const Quote m2) {
+		return m1.time<m2.time;
+	}
+
 	int StockOrder::calcQuoteIndex(int time)
 	{
 		int nret = -1;
@@ -762,12 +771,9 @@ namespace l2
 
 		Quote qt;
 		qt.time = time;
-		nret = lower_bound(_quoteVec.begin() , _quoteVec.begin(), qt) - _quoteVec.begin();
-
-		if (nret == _quoteVec.size())
-			return -1;
-
-		return nret;
+		nret = lower_bound(_quoteVec.begin() , _quoteVec.end(), qt) - _quoteVec.begin();
+		
+		return nret - 1;
 	}
 	
 	void StockOrder::BuildQuoteIndexMap()

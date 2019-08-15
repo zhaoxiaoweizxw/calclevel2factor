@@ -6,10 +6,12 @@
 
 #include "level2.h"
 
+
 using namespace std;
 
 void main(int argc, char **argv)
 {
+
 	string helpInfo = "parameter example: -dataRoot e:/level2/ -fastrunpath c:/fastrun954/ -targetPath ../summary/ -end 20161015 -begin 20161013 -factorlist earlymoney";
 	string dataRoot = "", targetPath = "./summary/",fastPath = "";
 	string begin = "", end = "";
@@ -88,4 +90,6 @@ void main(int argc, char **argv)
 
 
 	factorLevel2(mp_args);
+	return;
+
 }

@@ -482,6 +482,7 @@ string TC_File::load2str(const string &sFullFileName)
 	buf << fin.rdbuf();
 	str = buf.str();
 	fin.close();
+	buf.str("");
 
 	return str;
 

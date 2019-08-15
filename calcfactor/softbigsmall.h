@@ -18,7 +18,7 @@ namespace l2 {
 		std::map<Symbol, std::vector< double>> PassivBuyAmtVec;// 1.div, 2.symbol
 		std::map<Symbol, std::vector< double>> PassivSelAmtVec;// 1.div, 2.symbol
 
-		PerBuckValues(const std::vector<StockOrder> &stkVec, int DIV_SIZE);
+		void initBuck(const std::vector<StockOrder> &stkVec, int DIV_SIZE);
 
 		~PerBuckValues();
 	};
@@ -36,16 +36,16 @@ namespace l2 {
 		vector<string> Buck_DIV_KIND;
 		unsigned int DIV_SIZE;
 
-		PerBuckValues* pvalue;
 	public:
 		//SoftbigAmall();
 		SoftbigAmall(int UpLimit, int nSpan=1);
 		SoftbigAmall::~SoftbigAmall();
 
-		void intiStatDataSet(const std::vector<StockOrder> &stkVec,int div_size);
 		unsigned int SoftbigAmall::GetAmountInterval(double amount);
 		//
 		void OnBar(Market* mkt, int tradeDate, std::vector<StockOrder> &stkVec) override;
+
+		void insertToBuck(Symbol netsymbol, long lastBidAmo, long lstOfferAmo, PerBuckValues& values);
 
 
 		//因子要一天一天的存，这样可以任务中断的时候从中间继续，而不是从头再来

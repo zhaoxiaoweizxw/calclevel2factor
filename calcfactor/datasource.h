@@ -46,24 +46,23 @@ namespace l2
 		Symbol symbol;
 		int date;
 		int time;
-		float preClose;
-		float curKOpen;
-		float curKHigh;
-		float curKLow;
-		float curKClose;
+		Price preClose;
+		Price curKOpen;
+		Price curKHigh;
+		Price curKLow;
+		Price curKClose;
 		unsigned int curKVol;
 		unsigned int curKTurnover;
-		float curKHighLimit;
-		float curKLowLimit;
-		float curKMeanPrice;
+		Price curKHighLimit;
+		Price curKLowLimit;
+		Price curKMeanPrice;
 		unsigned int daysFromIPO;
-		float bidPrice[10];
+		Price bidPrice[10];
 		unsigned int  bidVolumn[10];
-		float offerPrice[10];
+		Price offerPrice[10];
 		unsigned int  offerVolumn[10];
-
-		bool operator<(const Quote m)const { 
-			return this->time<m.time;
+		bool operator<( const Quote m2)const {
+			return this->time<m2.time;
 		}
 
 	};
@@ -241,5 +240,7 @@ namespace l2
 			_orderIndexMap.clear();
 			_quoteIndexMap.clear();
 		}
+
+		
 	};
 }
