@@ -87,7 +87,16 @@ namespace l2
 
 	SoftbigAmall::SoftbigAmall(int UpLimit,int nSpan )
 	{
-		this->DIV_SIZE = ceil(UpLimit / nSpan * 1.0) + 1;
+		vector<int > dnlimitVec;
+		for (int i = 0; i < UpLimit;)
+		{
+			dnlimitVec.push_back(i);
+			if (i < 30)
+				i += nSpan;
+			else
+				i += 2 * nSpan;
+		}
+		this->DIV_SIZE = dnlimitVec.size() + 1;
 
 		this->Buck_DIV_ARR.reserve(this->DIV_SIZE);
 		this->Buck_DIV_NAME.reserve(this->DIV_SIZE);
@@ -95,15 +104,16 @@ namespace l2
 		{
 			this->Buck_DIV_ARR.emplace_back(i*10000);
 			char* name = new char[16];
-			sprintf_s(name, 16,"%u_%u", i, min(i + nSpan,UpLimit));
+			int tmpSpan = (i >= 30) ? 2 * nSpan : nSpan;
+			sprintf_s(name, 16,"%u_%u", i, i + tmpSpan);
 			this->Buck_DIV_NAME.emplace_back(name);
-			i += nSpan;
+			i += tmpSpan;
 			delete[] name;
 		}
 		this->Buck_DIV_ARR.push_back(UpLimit);
 
 		char* name = new char[16];
-		sprintf_s(name, 16,"%u_Inf",  UpLimit);
+		sprintf_s(name, 16,"%u_Inf", dnlimitVec.back());
 		this->Buck_DIV_NAME.push_back(name);
 		delete[] name;
 
@@ -158,6 +168,7 @@ namespace l2
 				int nDate = transInfo->date;
 
 				crtActType = ActiveType::ActiveUnk;
+
 
 				Quote q;
 				if (! stk.GetPreTimeQuote(ntradetime,q))
@@ -226,7 +237,7 @@ namespace l2
 
 					if (crtActType == ActiveType::ActiveBuy) //以上一笔快照的买一价做判断标准
 					{
-						if (lstBidSeq == bidSeq)
+						if (lstBidSeq == bidSeq && lstActType == crtActType)
 						{
 							//买委托单序号相同，并且买委托单序号大于卖委托序号，认定是一个持续主动买入单
 							lstbidAmt += amount;
@@ -239,13 +250,12 @@ namespace l2
 							lstbidAmt = amount;
 							lstbidVol = volumn;
 						}
-						crtActType = ActiveType::ActiveBuy;
 						lstofferAmt = 0;
 						lstofferVol = 0;
 					}
 					else
 					{
-						if (lstOfferSeq == offerSeq)
+						if (lstOfferSeq == offerSeq && lstActType == crtActType)
 						{
 							//卖委托单序号相同，并且卖委托单序号大于买委托序号，认定是一个持续主动卖出单，主动买入是否结束不明
 							lstofferAmt += amount;
@@ -258,7 +268,6 @@ namespace l2
 							lstofferAmt = amount;
 							lstofferVol = volumn;
 						}
-						crtActType = ActiveType::ActiveSel;
 						lstbidAmt = 0;
 						lstbidVol = 0;
 					}
@@ -266,6 +275,7 @@ namespace l2
 					lstOfferSeq = offerSeq;
 					if(ntradetime < 145700 || (netsymbol > 600000 && tradeDate < 20180820))
 						lstprice = price;
+					lstActType = crtActType;
 				}
 			}
 			

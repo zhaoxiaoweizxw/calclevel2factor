@@ -182,7 +182,7 @@ int factorLevel2(map<string, string> mapValue)
             l2::BigSmall bigsmall;
 			l2::EarlyMoney earlymoney;
 			l2::aggauctionAM aggaucInam;
-			l2::SoftbigAmall softbigsmall(100);
+			l2::SoftbigAmall softbigsmall(200);
             std::vector<int> days;
             days.push_back(d);
             l2::Market market(FastworkPath, targetPath, days, sourceSet, timefilter);

@@ -82,7 +82,7 @@ void Market::Run(int threadCnt)
             stkGroup[cnt % threadCnt].emplace_back(StockOrder(symbol, trans, order, quota));
 			
             cnt++;
-			/*if (cnt >= 2000)
+			/*if (cnt >= 30)
 				break;*/
         }
         // ∂‡œﬂ≥Ã
