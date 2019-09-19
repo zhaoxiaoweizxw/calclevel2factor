@@ -82,7 +82,7 @@ void Market::Run(int threadCnt)
             stkGroup[cnt % threadCnt].emplace_back(StockOrder(symbol, trans, order, quota));
 			
             cnt++;
-			/*if (cnt >= 30)
+			/*if (cnt >= 20)
 				break;*/
         }
         // 多线程
@@ -107,6 +107,9 @@ void Market::ProcessOne(int tradeDate, std::vector<StockOrder> &stkVec)
     // 加载数据
 	int i = 0;
 
+	clock_t startTime, endTime;
+	startTime = clock();//计时开始
+
 	//线程内分组，节约内存
 	int nPerSlipeStks = 20;
 	int nSlipe = ceil(stkVec.size() * 1.0 / nPerSlipeStks);
@@ -118,18 +121,33 @@ void Market::ProcessOne(int tradeDate, std::vector<StockOrder> &stkVec)
 			last1 = stkVec.begin() + j * nPerSlipeStks + nPerSlipeStks;
 		std::vector<StockOrder> stkSlipVec(first1, last1);
 				
+		int nloadtime = 0;
+		int npreparetime = 0;
 		for (auto &stk : stkSlipVec)
 		{
+			startTime = clock();//计时开始
 			stk.Load(_timefilter);
+			endTime = clock();//计时结束
+			nloadtime += (endTime - startTime);
+
+			startTime = clock();//计时开始
 			stk.PrepareData();
+			endTime = clock();//计时结束
+			npreparetime += (endTime - startTime);
 		}
 
+		/*cout << "The PrepareDate time is:" << nloadtime << "ms" << endl;
+		cout << "The PrepareDate time is:" << npreparetime << "ms" << endl;*/
+
+		startTime = clock();//计时开始
 		// 计算
 		for (auto h : _handler)
 		{
 			h->OnBar(this, tradeDate, stkSlipVec);
 		}
+		endTime = clock();//计时结束
 
+		//cout << "The handle time is:" << (endTime - startTime)  << "ms" << endl;
 
 		//std::cout << "handleDate allready:" << "  --threadID: " << std::this_thread::get_id() << std::endl;
 		// 释放资源

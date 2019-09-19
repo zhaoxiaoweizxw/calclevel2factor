@@ -96,6 +96,7 @@ namespace l2
 			else
 				i += 2 * nSpan;
 		}
+		this->bCalcBreakPrice = false;
 		this->DIV_SIZE = dnlimitVec.size() + 1;
 
 		this->Buck_DIV_ARR.reserve(this->DIV_SIZE);
@@ -130,7 +131,10 @@ namespace l2
 
 	}
 
-
+	void SoftbigAmall::setBreak(bool bBreak)
+	{
+		this->bCalcBreakPrice = bBreak;
+	}
 	void SoftbigAmall::OnBar(Market *mkt, int tradeDate, std::vector<StockOrder> &stkVec)
 	{
 
@@ -160,6 +164,8 @@ namespace l2
 			Price lstprice = 0.0;
 			long volumn = 0;
 			long long amount = 0;
+
+			bool  bBreaked = false;
 
 			for (auto const &trans : transList)
 			{
@@ -191,7 +197,7 @@ namespace l2
 					//1：买入价格大于等于上一笔快照的卖一价
 					//2：卖一价为空，涨幅在[0.098,0.102],[0.048,0.052]，这一次成交价格大于等于上一笔价格，认定涨停，此时成交，认定主动买入
 					//3：早盘集合竞价，成交价大于昨收
-					//4：尾盘集合竞价，成交大大于最后一个价格
+					//4：尾盘集合竞价，成交大于最后一个价格
 
 
 					if ((q.offerPrice[0] > superMinPoint && price >= q.offerPrice[0] && q.bidPrice[0] > superMinPoint && q.time >= 92500) ||
@@ -205,8 +211,8 @@ namespace l2
 					//主动卖出的场景：对应的也就是被动买入
 					//1：卖出价格小于等于上一笔快照的买一价
 					//2：买一价为空，涨幅在[-0.098,-0.102],[-0.048,-0.052]，这一次成交价格小于等于上一笔价格，认定跌停，此时成交，认定主动卖出
-					//3：早盘集合竞价，成交价大于昨收
-					//4：尾盘集合竞价，成交大大于最后一个价格
+					//3：早盘集合竞价，成交价小于昨收
+					//4：尾盘集合竞价，成交小于最后一个价格
 					
 					if ((q.bidPrice[0] > superMinPoint && price <= q.bidPrice[0] && q.offerPrice[0] > superMinPoint && q.time >= 92500) ||
 						((q.bidPrice[0] < superMinPoint) && (price <= lstprice) && ((price >q.preClose * (1-0.105) && price < q.preClose * (1-0.095)) || (price >q.preClose * (1 - 0.055) && price < q.preClose * (1 - 0.045)))) ||
@@ -220,7 +226,7 @@ namespace l2
 					{
 						if (price >lstprice || ((price < q.preClose * 1.105 && price > q.preClose * 1.095) || (price < q.preClose * 1.055 && price > q.preClose * 1.045)))
 							crtActType = ActiveType::ActiveBuy;
-						else if (price <lstprice || ((price >q.preClose * (1 - 0.102) && price < q.preClose * (1 - 0.095)) || (price >q.preClose * (1 - 0.052) && price < q.preClose * (1 - 0.045))))
+						else if (price <lstprice || ((price >q.preClose * (1 - 0.105) && price < q.preClose * (1 - 0.095)) || (price >q.preClose * (1 - 0.055) && price < q.preClose * (1 - 0.045))))
 							crtActType = ActiveType::ActiveSel;
 					}
 
@@ -234,7 +240,7 @@ namespace l2
 							crtActType = ActiveType::ActiveSel;
 					}
 
-
+					//std::cout << transInfo->seq <<"\t" << crtActType << endl;
 					if (crtActType == ActiveType::ActiveBuy) //以上一笔快照的买一价做判断标准
 					{
 						if (lstBidSeq == bidSeq && lstActType == crtActType)
@@ -242,13 +248,23 @@ namespace l2
 							//买委托单序号相同，并且买委托单序号大于卖委托序号，认定是一个持续主动买入单
 							lstbidAmt += amount;
 							lstbidVol += volumn;
+
+							//只算越价单
+							if (bCalcBreakPrice && lstprice < price)
+							{
+								bBreaked = true;
+								lstbidAmt = amount;
+								lstbidVol = volumn;
+							}
 						}
 						else
 						{
 							//开始了一笔新主动买，上一笔主动单结束
-							insertToBuck(netsymbol, lstbidAmt, lstofferAmt, values);
+							if(!bCalcBreakPrice || bBreaked)
+								insertToBuck(netsymbol, lstbidAmt, lstofferAmt, values);
 							lstbidAmt = amount;
 							lstbidVol = volumn;
+							bBreaked = false;
 						}
 						lstofferAmt = 0;
 						lstofferVol = 0;
@@ -260,13 +276,22 @@ namespace l2
 							//卖委托单序号相同，并且卖委托单序号大于买委托序号，认定是一个持续主动卖出单，主动买入是否结束不明
 							lstofferAmt += amount;
 							lstofferVol += volumn;
+							//只算越价单
+							if (bCalcBreakPrice && lstprice > price)
+							{
+								bBreaked = true;
+								lstofferAmt = amount;
+								lstofferVol = volumn;
+							}
 						}
 						else
 						{
 							//开始了一笔新主动买，上一笔主动单结束
-							insertToBuck(netsymbol, lstbidAmt, lstofferAmt, values);
+							if (!bCalcBreakPrice || bBreaked)
+								insertToBuck(netsymbol, lstbidAmt, lstofferAmt, values);
 							lstofferAmt = amount;
 							lstofferVol = volumn;
+							bBreaked = false;
 						}
 						lstbidAmt = 0;
 						lstbidVol = 0;

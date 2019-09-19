@@ -18,6 +18,9 @@ namespace l2 {
 		std::map<Symbol, std::vector< double>> PassivBuyAmtVec;// 1.div, 2.symbol
 		std::map<Symbol, std::vector< double>> PassivSelAmtVec;// 1.div, 2.symbol
 
+		std::map<Symbol, std::vector< double>> BreakBuyAmtVec;// 1.div, 2.symbol
+		std::map<Symbol, std::vector< double>> BreakSelAmtVec;// 1.div, 2.symbol
+
 		void initBuck(const std::vector<StockOrder> &stkVec, int DIV_SIZE);
 
 		~PerBuckValues();
@@ -36,14 +39,18 @@ namespace l2 {
 		vector<string> Buck_DIV_KIND;
 		unsigned int DIV_SIZE;
 
+		bool bCalcBreakPrice;
+
 	public:
 		//SoftbigAmall();
 		SoftbigAmall(int UpLimit, int nSpan=1);
 		SoftbigAmall::~SoftbigAmall();
 
-		unsigned int SoftbigAmall::GetAmountInterval(double amount);
+		unsigned int GetAmountInterval(double amount);
 		//
 		void OnBar(Market* mkt, int tradeDate, std::vector<StockOrder> &stkVec) override;
+
+		void setBreak(bool bBreak);
 
 		void insertToBuck(Symbol netsymbol, long lastBidAmo, long lstOfferAmo, PerBuckValues& values);
 

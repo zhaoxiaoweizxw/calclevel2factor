@@ -204,7 +204,18 @@ int factorLevel2(map<string, string> mapValue)
 			}
 			if (std::find(factorList.begin(), factorList.end(), "softbigsmall") != factorList.end())
 			{
+				if (std::find(factorList.begin(), factorList.end(), "softbigsmallbreak") != factorList.end())
+				{
+					std::cerr << "Could not calc softbigsmall and softbigsmallbreak in one proc" << std::endl;
+					return 0;
+				}
 				softbigsmall.SetFactorSaveName("softbigsmall");
+				market.RegHandler(&softbigsmall);
+			}
+			if (std::find(factorList.begin(), factorList.end(), "softbigsmallbreak") != factorList.end())
+			{
+				softbigsmall.SetFactorSaveName("softbigsmallbreak");
+				softbigsmall.setBreak(true);
 				market.RegHandler(&softbigsmall);
 			}
             market.Run(atoi(threadnumb.data()));

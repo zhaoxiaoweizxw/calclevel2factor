@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>-dataRoot E:/Level2Data/ -fastrunpath E:/l2date_sample/ -targetPath ../summary/ -threadnum 3 -begin 20190704 -end 20190705 -factorlist softbigsmall</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-dataRoot E:/Level2Data/ -fastrunpath E:/l2date_sample/ -targetPath ../summary/ -threadnum 3 -begin 20190705 -end 20190706 -factorlist softbigsmall &gt;tstlog.txt</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
