@@ -308,7 +308,7 @@ namespace l2
 
 		if (crtActType == ActiveType::ActiveBuy)
 		{
-			//连续委买编码，并且是主动买入；避免一个订单以买一价挂单主动买入一部分然后马上被动成交
+			//连续委买编码，并且是主动买入；避免一个订单以买一价挂单主动买入一部分然后马上被动成交  
 			if (lstBidSeq == bidSeq && lstActType == crtActType)
 			{
 				if (lstprice < price)
