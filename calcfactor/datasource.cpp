@@ -806,12 +806,78 @@ namespace l2
 		return;
 	}
 
+	void StockOrder::BuildSHOrderVec()
+	{
+		int i = 0;
+		if (_symbol < 600000)//上海市场
+		{
+			OrderSeq bidseq, offerseq;
+			for (auto const &t : _transVec)
+			{
+				bidseq = t.bidSeq;
+				auto itIndex = _orderIndexMap.find(bidseq);
+				if (itIndex == _orderIndexMap.end())
+				{
+					Order order;
+					order.symbol = _symbol;
+					order.dt = t.dt;
+					order.channel = t.channel;
+					order.seq = t.bidSeq;
+					order.price = t.price;
+					order.num = t.num;
+					order.direct = 1;
+					order.type = 2;
+					_orderVec.push_back(order);
+					_orderIndexMap.insert(make_pair(order.seq, i++));
+
+				}
+				else
+				{
+					auto it = _orderVec.begin() + itIndex->second;
+					it->num += t.num;
+					it->price = t.price;
+				}
+
+				offerseq = t.offerSeq;
+				itIndex = _orderIndexMap.find(offerseq);
+				if (itIndex == _orderIndexMap.end())
+				{
+					Order order;
+					order.symbol = _symbol;
+					order.dt = t.dt;
+					order.channel = t.channel;
+					order.seq = t.bidSeq;
+					order.price = t.price;
+					order.num = t.num;
+					order.direct = 2;
+					order.type = 2;
+					_orderVec.push_back(order);
+					_orderIndexMap.insert(make_pair(order.seq, i++));
+
+				}
+				else
+				{
+					auto it = _orderVec.begin() + itIndex->second;
+					it->num += t.num;
+					it->price = t.price;
+				}
+			}
+		}
+	}
+
 	void StockOrder::PrepareData()
 	{
 		BuildOrderIndexMap();
 
 		//快照数量没那么多，可以不用map
 		//BuildQuotaIndexMap();
+
+
+		//构造上海市场的ordervec
+		BuildSHOrderVec();
+
+		//下面的prepare太简陋了
+		return;
 
 		for (auto const &t : _transVec)
 		{
@@ -822,49 +888,17 @@ namespace l2
 			if (t.type == 'F')
 			{ // transact
 				OrderTrans(t.bidSeq, t.num, t.price);
-				if (t.symbol < 60000)
-				{
-					/*
-					LOG_LOGIC_ERROR("|attempt to transact a invalid bid order "
-					<< string(",symbol=") << t.symbol << string(",orderSeq=") << t.bidSeq
-					<< string(",transSeq=") << t.seq << std::endl);
-					*/
-				}
 				OrderTrans(t.offerSeq, t.num, t.price);
-				if (t.symbol < 60000)
-				{
-					/*
-					LOG_LOGIC_INFO("|attempt to transact a invalid offer order"
-					<< string(",symbol=") << t.symbol << string(",orderSeq=") << t.offerSeq
-					<< string(",transSeq=") << t.seq << std::endl);
-					*/
-				}
 			}
 			else if (t.type == '4')
 			{ // cancel
 				if (t.cBidSeq > 0 && t.cOfferSeq == 0)
 				{ // cancel bid
 					OrderCancel(t.bidSeq, t.num);
-					if (t.symbol < 60000)
-					{
-						/*
-						LOG_LOGIC_ERROR("|attempt to cancel a invalid bid order"
-						<< string(",symbol=") << t.symbol << string(",orderSeq=") << t.bidSeq
-						<< string(",transSeq=") << t.seq << std::endl);
-						*/
-					}
 				}
 				else if (t.cBidSeq == 0 && t.cOfferSeq > 0)
 				{ // cancel offer
 					OrderCancel(t.offerSeq, t.num);
-					if (t.symbol < 60000)
-					{
-						/*
-						LOG_LOGIC_ERROR("|attempt to cancel a invalid offer order"
-						<< string(",symbol=") << t.symbol << string(",orderSeq=") << t.offerSeq
-						<< string(",transSeq=") << t.seq << std::endl);
-						*/
-					}
 				}
 				else
 				{ // unknown
@@ -887,11 +921,6 @@ namespace l2
 		auto it = _orderVec.begin()+itIndex->second;
 		
 
-		/*auto it = std::find_if(_orderVec.begin(), _orderVec.end(), [seq](const Order &v) { return v.seq == seq; });
-		if (it == _orderVec.end())
-		{
-			return;
-		}*/
 		if (it->IsValid())
 		{
 			it->Trans(num, price);
@@ -907,11 +936,6 @@ namespace l2
 		}
 		auto it = _orderVec.begin() + itIndex->second;
 
-		/*auto it = std::find_if(_orderVec.begin(), _orderVec.end(), [seq](const Order &v) { return v.seq == seq; });
-		if (it == _orderVec.end())
-		{
-			return;
-		}*/
 		if (it->IsValid())
 		{
 			it->Cancel(num);

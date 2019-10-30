@@ -5,6 +5,7 @@
 #include <list>
 #include <vector>
 #include <map>
+#include <tuple>
 using std::list;
 using std::string;
 using std::vector;
@@ -105,6 +106,7 @@ namespace l2
 		double transPrice;      // 成交均价
 		unsigned int cancelNum; //已撤单数量
 		unsigned int refCount;  //引用计数
+
 	};
 
 	class Trans
@@ -142,6 +144,7 @@ namespace l2
 
 		bool IsValid() const;
 		bool IsEmpty() const { return symbol == 0; }
+
 	};
 
 	class QuoteStream
@@ -191,6 +194,8 @@ namespace l2
 		std::vector<Quote> _quoteVec;
 		// 记录order的位置，用空间换时间
 		std::map<OrderSeq, int> _orderIndexMap;
+		//记录每笔委托的大小（量和金额），深圳的可以直接取，上海的需要累加一下
+		std::map<OrderSeq, std::pair<int,double>> _orderSizeMap;
 
 		// 记录quota分钟开始的位置
 		std::map<int, clsQuoteIndex*> _quoteIndexMap;
@@ -226,8 +231,10 @@ namespace l2
 			return std::string(buf);
 		}
 
+		//建立索引，方便查找对应的order
 		void BuildOrderIndexMap();
 		void BuildQuoteIndexMap();
+		void BuildSHOrderVec();
 
 		void Release()
 		{
@@ -237,8 +244,10 @@ namespace l2
 			std::vector<Trans>().swap(_transVec);
 			_quoteVec.clear();
 			std::vector<Quote>().swap(_quoteVec);
+
 			_orderIndexMap.clear();
 			_quoteIndexMap.clear();
+			_orderSizeMap.clear();
 		}
 
 		

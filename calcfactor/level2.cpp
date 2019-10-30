@@ -7,6 +7,7 @@
 #include "earlymoney.h"
 #include "aggauctionAM.h"
 #include "softbigsmall.h"
+#include "datacheck.h"
 //#include "business/refdata/MarketSessionManager.h"
 #include "market.h"
 #include "public.h"
@@ -54,8 +55,7 @@ int factorLevel2(map<string, string> mapValue)
     std::vector<std::string> factorList = TC_Common::sepstr<std::string>(getMapvalue("factorlist", mapValue,""), ",|");
     if (factorList.empty())
     {
-        factorList.push_back("earlymoney");
-		factorList.push_back("bigsmall");
+        factorList.push_back("datacheck");
     }
 
 	int nRet = 0;
@@ -80,12 +80,11 @@ int factorLevel2(map<string, string> mapValue)
 			return nRet;
 		}
 	}
-	FastworkPath += "\\";
 
 	//创建存储因子的文件夹
 	for (string factorSaveName : factorList)
 	{
-		string factorSavePath = targetPath + "\\" + factorSaveName + "\\";
+		string factorSavePath = targetPath + "/" + factorSaveName ;
 		if (!TC_File::isFileExist(factorSavePath))
 		{
 			nRet = _mkdir(factorSavePath.c_str());
@@ -154,10 +153,9 @@ int factorLevel2(map<string, string> mapValue)
         // 使用 shell 脚本下载
         //std::string cmd = std::string("bash level2downloader.sh -d ") + std::to_string(d);
 		std::string tmpdataRoot(dataRoot);
-		replace(tmpdataRoot.begin(), tmpdataRoot.end(), '/', '\\');
 		std::string tmpfastRoot(FastworkPath);
-		replace(tmpfastRoot.begin(), tmpfastRoot.end(), '/', '\\');
-		std::string cmd = std::string("..\\scripts\\level2downloader.bat ") + std::to_string(d) + " " + tmpdataRoot + " "+ tmpfastRoot;
+		std::string cmd = std::string("../scripts/level2downloader.bat ") + std::to_string(d) + " " + tmpdataRoot + " "+ tmpfastRoot+'/';
+		replace(cmd.begin(), cmd.end(), '/', '\\');
         int rc = ::system(cmd.c_str());
         if (rc != 0)
         {
@@ -183,6 +181,7 @@ int factorLevel2(map<string, string> mapValue)
 			l2::EarlyMoney earlymoney;
 			l2::aggauctionAM aggaucInam;
 			l2::SoftbigAmall softbigsmall(200);
+			l2::dataCheckL2 datachecker;
             std::vector<int> days;
             days.push_back(d);
             l2::Market market(FastworkPath, targetPath, days, sourceSet, timefilter);
@@ -218,12 +217,16 @@ int factorLevel2(map<string, string> mapValue)
 				softbigsmall.setBreak(true);
 				market.RegHandler(&softbigsmall);
 			}
+			if (std::find(factorList.begin(), factorList.end(), "datacheck") != factorList.end())
+			{
+				datachecker.SetFactorSaveName("datacheck");
+				market.RegHandler(&datachecker);
+			}
             market.Run(atoi(threadnumb.data()));
 			finish = clock();
             //LOG_DEBUG << "tradedate=" << d << "|process finished elapse " << (t.elapse() / 1000) << " s" << std::endl;
 			std::cout << "tradedate=" << d << "|process finished elapse " << ((finish-start) / CLOCKS_PER_SEC) << " s" << std::endl;
-			replace(FastworkPath.begin(), FastworkPath.end(), '/', '\\');
-			std::string rmfile = "rd /S/Q " + FastworkPath + std::to_string(d);
+			std::string rmfile = "rd /S/Q " + FastworkPath + '/' + std::to_string(d);
             ::system(rmfile.c_str());
         }
         catch (std::exception &e)

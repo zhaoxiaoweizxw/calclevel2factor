@@ -51,6 +51,12 @@
     <ClCompile Include="softbigsmall.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="datacheck.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="transReduct.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="public.h">
@@ -84,6 +90,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="softbigsmall.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="datacheck.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="transReduct.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

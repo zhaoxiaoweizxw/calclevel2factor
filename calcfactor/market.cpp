@@ -265,7 +265,7 @@ bool Market::FactorToFile(std::string& factorSaveName, int tradeDate, std::strin
 		std::lock_guard<std::mutex> lck(mtx);
 
 
-		std::string curDayFactorFile = outPath + "\\" + factorSaveName + "\\" + std::to_string(tradeDate) + ".csv";
+		std::string curDayFactorFile = outPath + "/" + factorSaveName + "/" + std::to_string(tradeDate) + ".csv";
 		bool bExist = TC_File::isFileExist(curDayFactorFile);
 
 		ofstream outFactorFile;

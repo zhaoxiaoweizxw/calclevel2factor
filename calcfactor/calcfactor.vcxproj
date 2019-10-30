@@ -115,6 +115,7 @@
     <ClCompile Include="aggauctionAM.cpp" />
     <ClCompile Include="BigSmall.cpp" />
     <ClCompile Include="DailyFactors.cpp" />
+    <ClCompile Include="datacheck.cpp" />
     <ClCompile Include="datasource.cpp" />
     <ClCompile Include="earlymoney.cpp" />
     <ClCompile Include="level2.cpp" />
@@ -122,6 +123,7 @@
     <ClCompile Include="market.cpp" />
     <ClCompile Include="public.cpp" />
     <ClCompile Include="softbigsmall.cpp" />
+    <ClCompile Include="transReduct.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\utils\TimeUtil.h" />
@@ -129,12 +131,14 @@
     <ClInclude Include="aggauctionAM.h" />
     <ClInclude Include="BigSmall.h" />
     <ClInclude Include="DailyFactors.h" />
+    <ClInclude Include="datacheck.h" />
     <ClInclude Include="datasource.h" />
     <ClInclude Include="earlymoney.h" />
     <ClInclude Include="level2.h" />
     <ClInclude Include="market.h" />
     <ClInclude Include="public.h" />
     <ClInclude Include="softbigsmall.h" />
+    <ClInclude Include="transReduct.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
